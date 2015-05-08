@@ -424,6 +424,8 @@ def analysePacket(coms,typ,msg):
     elif coms[0]=='K':
         command = ":".join(map(str, coms[1:]))+' '+msg
         Logger << 'send command to keithley: '
+        Logger << command
+        Logger << msg
         keithley.write(command)
     elif coms[0].lower().startswith('exit') and typ != 'a':
         client.closeConnection()
@@ -450,12 +452,18 @@ while client.anzahl_threads > 0 and End == False and client.isClosed == False:
         #Logger << 'got Packet: %s'%packet.Print()
         data = packet.data
         timeStamp,coms,typ,msg,command = decode(data)
+        Logger << command
         # 'T:',timeStamp, 'Comand:',command
         #Logger << '%s: %s, %s, %s'%(timeStamp,len(coms),typ,msg)
         dataOut = '%s\n'%packet.Print()
         if command.find(':DOSWEEP')!=-1:
             sweep()
-        if len(coms)>0:
+        elif coms[0]=='K':
+            cmd = data[2:]
+            Logger << 'send command to keithley: '
+            Logger << cmd
+            keithley.write(cmd)
+        elif len(coms)>0:
             analysePacket(coms,typ,msg)
         else:
             keithley.write(command)
